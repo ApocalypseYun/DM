@@ -1,0 +1,34 @@
+.DS_Store
+._*
+.worktrees/
+__pycache__/
+*.py[cod]
+*.log
+*.zip
+
+# Generated audio/video artifacts from digital_human
+/digital_human/static/*.mp3
+/digital_human/static/*.mp4
+/digital_human/static/*_final.mp4
+
+# Runtime outputs from LivePortrait
+/LivePortrait/outputs/*
+!/LivePortrait/outputs/.gitkeep
+/LivePortrait/animations/*
+!/LivePortrait/animations/.gitkeep
+
+# Large local model assets
+/LivePortrait/pretrained_weights/*
+!/LivePortrait/pretrained_weights/.gitkeep
+/Wav2Lip/checkpoints/*
+!/Wav2Lip/checkpoints/.gitkeep
+/pretrained_weights/*
+!/pretrained_weights/.gitkeep
+
+# Remote root runtime output mirror
+/outputs/*
+!/outputs/.gitkeep
+
+# Large example videos from LivePortrait
+/LivePortrait/assets/examples/driving/*.mp4
+/LivePortrait/assets/examples/source/*.mp4
