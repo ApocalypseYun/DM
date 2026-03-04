@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.main import create_app
+from app.main import create_app, resolve_runtime_root
 
 
 def test_health_endpoint_reports_ok() -> None:
@@ -24,6 +24,14 @@ def test_root_page_serves_widget_demo_shell() -> None:
 
     assert response.status_code == 200
     assert "DigitalHumanWidget.mount" in response.text
+
+
+def test_resolve_runtime_root_falls_back_to_container_parent(tmp_path: Path) -> None:
+    anchor = tmp_path / "app" / "main.py"
+    anchor.parent.mkdir()
+    anchor.write_text("", encoding="utf-8")
+
+    assert resolve_runtime_root(anchor) == tmp_path
 
 
 def test_websocket_accepts_connection_and_acknowledges_barge_in() -> None:

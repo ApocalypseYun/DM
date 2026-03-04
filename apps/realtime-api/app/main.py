@@ -13,13 +13,21 @@ from app.session import RealtimeSession
 from app.tts_client import TTSClient
 
 
+def resolve_runtime_root(anchor: Optional[Path] = None) -> Path:
+    current = (anchor or Path(__file__)).resolve()
+    for candidate in current.parents:
+        if (candidate / "packages" / "widget").exists() and (candidate / "assets").exists():
+            return candidate
+    return current.parent.parent
+
+
 def create_app(
     asr_client: Optional[ASRClient] = None,
     dify_client: Optional[DifyClient] = None,
     tts_client: Optional[TTSClient] = None,
 ) -> FastAPI:
     app = FastAPI(title=settings.app_name, version=settings.version)
-    repo_root = Path(__file__).resolve().parents[3]
+    repo_root = resolve_runtime_root()
     widget_dist_dir = repo_root / "packages" / "widget" / "dist"
     assets_dir = repo_root / "assets"
 

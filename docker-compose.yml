@@ -3,7 +3,8 @@ version: "3.9"
 services:
   realtime-api:
     build:
-      context: ./apps/realtime-api
+      context: .
+      dockerfile: ./apps/realtime-api/Dockerfile
     restart: unless-stopped
     ports:
       - "8090:8090"

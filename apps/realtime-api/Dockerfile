@@ -2,10 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY apps/realtime-api/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app ./app
+COPY apps/realtime-api/app ./app
+COPY packages/widget/dist ./packages/widget/dist
+COPY assets ./assets
 
 EXPOSE 8090
 
