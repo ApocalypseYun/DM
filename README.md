@@ -118,6 +118,7 @@ To prepare the recommended local Chinese female voice, use:
 ```bash
 cd /Users/liuguanzhong/Code/D-M/DM/.worktrees/realtime-refactor
 sh apps/local-tts/scripts/fetch_piper_voice.sh ./data/piper
+sh apps/local-tts/scripts/fetch_piper_runtime.sh ./apps/local-tts/vendor
 ```
 
 ## Local Development

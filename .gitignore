@@ -7,6 +7,8 @@ node_modules/
 dist/
 data/piper/*
 !data/piper/.gitkeep
+apps/local-tts/vendor/*
+!apps/local-tts/vendor/.gitkeep
 __pycache__/
 *.py[cod]
 *.log
