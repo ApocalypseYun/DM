@@ -25,7 +25,7 @@ services:
     ports:
       - "8091:8091"
     environment:
-      TTS_PROVIDER: ${TTS_PROVIDER:-mock}
+      TTS_PROVIDER: ${TTS_PROVIDER:-xinference}
       PIPER_BIN: ${PIPER_BIN:-/usr/local/bin/piper}
       PIPER_MODEL_PATH: ${PIPER_MODEL_PATH:-/models/piper/zh_CN-huayan-medium.onnx}
       PIPER_CONFIG_PATH: ${PIPER_CONFIG_PATH:-/models/piper/zh_CN-huayan-medium.onnx.json}
@@ -33,5 +33,12 @@ services:
       PIPER_LENGTH_SCALE: ${PIPER_LENGTH_SCALE:-1.05}
       PIPER_NOISE_W: ${PIPER_NOISE_W:-0.7}
       PIPER_SENTENCE_SILENCE: ${PIPER_SENTENCE_SILENCE:-0.12}
+      XINFERENCE_TTS_BASE_URL: ${XINFERENCE_TTS_BASE_URL:-http://host.docker.internal:9997}
+      XINFERENCE_TTS_MODEL_UID: ${XINFERENCE_TTS_MODEL_UID:-CosyVoice-300M}
+      XINFERENCE_TTS_VOICE: ${XINFERENCE_TTS_VOICE:-}
+      XINFERENCE_TTS_RESPONSE_FORMAT: ${XINFERENCE_TTS_RESPONSE_FORMAT:-wav}
+      XINFERENCE_TTS_SPEED: ${XINFERENCE_TTS_SPEED:-1.0}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./data/piper:/models/piper

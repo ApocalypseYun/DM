@@ -4,6 +4,8 @@ import subprocess
 import wave
 from typing import Protocol
 
+import httpx
+
 from app.config import settings
 
 
@@ -13,6 +15,8 @@ class Synthesizer(Protocol):
 
 
 def build_synthesizer() -> Synthesizer:
+    if settings.provider == "xinference":
+        return XinferenceSynthesizer()
     if settings.provider == "piper":
         return PiperSynthesizer()
     return MockSynthesizer()
@@ -68,6 +72,33 @@ class PiperSynthesizer:
             raise RuntimeError("piper returned no audio")
 
         return _wrap_pcm_as_wav(raw_audio)
+
+
+class XinferenceSynthesizer:
+    def synthesize(self, text: str, voice_profile_id: str) -> bytes:
+        payload = {
+            "model": settings.xinference_tts_model_uid,
+            "input": text,
+            "voice": settings.xinference_tts_voice,
+            "response_format": settings.xinference_tts_response_format,
+            "speed": settings.xinference_tts_speed,
+            "stream": False,
+            "kwargs": "{}",
+        }
+
+        try:
+            response = httpx.post(
+                f"{settings.xinference_tts_base_url.rstrip('/')}/v1/audio/speech",
+                json=payload,
+                timeout=120,
+            )
+            response.raise_for_status()
+        except Exception as exc:
+            raise RuntimeError(f"xinference tts failed: {exc}") from exc
+
+        if not response.content:
+            raise RuntimeError("xinference tts returned no audio")
+        return response.content
 
 
 def encode_wav_base64(wav_bytes: bytes) -> str:
