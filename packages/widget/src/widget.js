@@ -40,14 +40,25 @@ export class DigitalHumanWidget {
   }
 
   async toggleListening() {
-    this.listening = !this.listening
+    const nextListening = !this.listening
+    this.listening = nextListening
     this.view.setListeningActive(this.listening)
     this.view.setState(this.listening ? 'listening' : 'idle')
-    if (this.listening) {
-      await this.audio.startStreaming(this.options.voiceProfile)
-      return
+
+    try {
+      if (this.listening) {
+        await this.audio.startStreaming(this.options.voiceProfile)
+        this.view.appendTranscript('系统', '麦克风已开启，请直接说话')
+        return
+      }
+
+      await this.audio.stopStreaming()
+    } catch (error) {
+      this.listening = false
+      this.view.setListeningActive(false)
+      this.view.setState('idle')
+      this.view.appendTranscript('系统', error instanceof Error ? error.message : 'Failed to start microphone')
     }
-    await this.audio.stopStreaming()
   }
 
   async handleServerEvent(payload) {

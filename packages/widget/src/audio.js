@@ -42,6 +42,7 @@ export class AudioRuntime {
     this.playbackSource = null
     this.isStreaming = false
     this.lastSpeechAt = 0
+    this.voiceActivationThreshold = 0.015
   }
 
   async connect() {
@@ -67,16 +68,29 @@ export class AudioRuntime {
       return
     }
     this.voiceProfile = voiceProfile
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error('Current browser does not support microphone capture')
+    }
+    if (typeof window.MediaRecorder === 'undefined') {
+      throw new Error('Current browser does not support MediaRecorder')
+    }
 
-    this.mediaStream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        channelCount: 1,
-        echoCancellation: true,
-        noiseSuppression: true,
-      },
-    })
+    try {
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+        },
+      })
+    } catch (error) {
+      throw this._normalizeStartError(error)
+    }
 
     this.audioContext = new (window.AudioContext || window.webkitAudioContext)()
+    if (this.audioContext.state === 'suspended') {
+      await this.audioContext.resume()
+    }
     this.audioSource = this.audioContext.createMediaStreamSource(this.mediaStream)
     this.analyser = this.audioContext.createAnalyser()
     this.analyser.fftSize = 512
@@ -117,7 +131,7 @@ export class AudioRuntime {
     this.analysisTimer = window.setInterval(() => {
       const level = this._readLevel()
       const now = Date.now()
-      if (level > 0.04) {
+      if (level > this.voiceActivationThreshold) {
         this.lastSpeechAt = now
         if (!this.segmentActive) {
           this.segmentActive = true
@@ -205,5 +219,21 @@ export class AudioRuntime {
       total += centered * centered
     }
     return Math.sqrt(total / samples.length)
+  }
+
+  _normalizeStartError(error) {
+    if (!error || typeof error !== 'object') {
+      return new Error('Failed to start microphone')
+    }
+    if (error.name === 'NotAllowedError') {
+      return new Error('Microphone permission was denied')
+    }
+    if (error.name === 'NotFoundError') {
+      return new Error('No microphone device was found')
+    }
+    if (error.name === 'NotReadableError') {
+      return new Error('Microphone is busy or unavailable')
+    }
+    return new Error(error.message || 'Failed to start microphone')
   }
 }
