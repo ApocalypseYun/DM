@@ -19,3 +19,16 @@ export function normalizeMountOptions(options) {
     title: options.title ?? '数字人助手',
   }
 }
+
+export function shouldCloseVoiceSegment(lastSpeechDeltaMs, silenceWindowMs = 1400) {
+  return lastSpeechDeltaMs > silenceWindowMs
+}
+
+export function shouldCommitVoiceSegment(
+  durationMs,
+  byteLength,
+  minimumDurationMs = 600,
+  minimumByteLength = 1800,
+) {
+  return durationMs >= minimumDurationMs && byteLength >= minimumByteLength
+}

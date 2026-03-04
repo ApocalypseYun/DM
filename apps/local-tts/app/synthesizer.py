@@ -44,6 +44,14 @@ class PiperSynthesizer:
         ]
         if settings.piper_config_path:
             command.extend(["--config", settings.piper_config_path])
+        if settings.piper_noise_scale:
+            command.extend(["--noise_scale", settings.piper_noise_scale])
+        if settings.piper_length_scale:
+            command.extend(["--length_scale", settings.piper_length_scale])
+        if settings.piper_noise_w:
+            command.extend(["--noise_w", settings.piper_noise_w])
+        if settings.piper_sentence_silence:
+            command.extend(["--sentence_silence", settings.piper_sentence_silence])
 
         process = subprocess.run(
             command,

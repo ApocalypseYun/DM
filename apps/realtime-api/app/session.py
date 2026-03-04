@@ -118,7 +118,7 @@ class RealtimeSession:
 
             user_text = await self.asr_client.transcribe_audio(audio_bytes, mime_type=mime_type)
             if not user_text:
-                await self._emit(error_event("ASR returned empty text"))
+                self.active_response_id = None
                 await self._emit(avatar_state_event("idle"))
                 return
             if response_id != self.active_response_id:
@@ -131,13 +131,12 @@ class RealtimeSession:
             if response_id != self.active_response_id:
                 return
 
-            await self._emit(assistant_text_final_event(assistant_text, response_id))
-
             tts_payload = await self.tts_client.synthesize(assistant_text, voice_profile_id=voice_profile_id)
             if response_id != self.active_response_id:
                 return
 
             await self._emit(avatar_state_event("speaking", response_id))
+            await self._emit(assistant_text_final_event(assistant_text, response_id))
             await self._emit(
                 tts_audio_chunk_event(
                     tts_payload["audio_base64"],

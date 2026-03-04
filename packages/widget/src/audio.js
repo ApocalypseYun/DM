@@ -1,3 +1,5 @@
+import { shouldCloseVoiceSegment, shouldCommitVoiceSegment } from './helpers.js'
+
 function blobToBase64(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -42,7 +44,11 @@ export class AudioRuntime {
     this.playbackSource = null
     this.isStreaming = false
     this.lastSpeechAt = 0
-    this.voiceActivationThreshold = 0.015
+    this.segmentStartedAt = 0
+    this.voiceActivationThreshold = 0.02
+    this.segmentSilenceWindowMs = 1400
+    this.minimumSegmentDurationMs = 600
+    this.minimumSegmentByteLength = 1800
   }
 
   async connect() {
@@ -111,10 +117,23 @@ export class AudioRuntime {
     this.mediaRecorder.addEventListener('stop', async () => {
       if (!this.websocket || this.segmentChunks.length === 0) {
         this.segmentChunks = []
+        this.segmentStartedAt = 0
         return
       }
       const blob = new Blob(this.segmentChunks, { type: this.mediaRecorder.mimeType || 'audio/webm' })
       this.segmentChunks = []
+      const segmentDurationMs = this.segmentStartedAt ? Date.now() - this.segmentStartedAt : 0
+      this.segmentStartedAt = 0
+      if (
+        !shouldCommitVoiceSegment(
+          segmentDurationMs,
+          blob.size,
+          this.minimumSegmentDurationMs,
+          this.minimumSegmentByteLength,
+        )
+      ) {
+        return
+      }
       const audioBase64 = await blobToBase64(blob)
       this.websocket.send(
         JSON.stringify({
@@ -131,19 +150,20 @@ export class AudioRuntime {
     this.analysisTimer = window.setInterval(() => {
       const level = this._readLevel()
       const now = Date.now()
-      if (level > this.voiceActivationThreshold) {
-        this.lastSpeechAt = now
-        if (!this.segmentActive) {
-          this.segmentActive = true
-          this.segmentChunks = []
-          this.websocket?.send(JSON.stringify({ type: 'barge_in' }))
-          if (this.mediaRecorder?.state === 'inactive') {
+        if (level > this.voiceActivationThreshold) {
+          this.lastSpeechAt = now
+          if (!this.segmentActive) {
+            this.segmentActive = true
+            this.segmentStartedAt = now
+            this.segmentChunks = []
+            this.websocket?.send(JSON.stringify({ type: 'barge_in' }))
+            if (this.mediaRecorder?.state === 'inactive') {
             this.mediaRecorder.start()
           }
         }
       }
 
-      if (this.segmentActive && now - this.lastSpeechAt > 900) {
+      if (this.segmentActive && shouldCloseVoiceSegment(now - this.lastSpeechAt, this.segmentSilenceWindowMs)) {
         this.segmentActive = false
         if (this.mediaRecorder?.state === 'recording') {
           this.mediaRecorder.stop()
@@ -164,6 +184,7 @@ export class AudioRuntime {
     }
     this.segmentActive = false
     this.segmentChunks = []
+    this.segmentStartedAt = 0
     this.mediaRecorder = null
     this.audioSource?.disconnect()
     this.audioSource = null

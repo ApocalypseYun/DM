@@ -29,5 +29,9 @@ services:
       PIPER_BIN: ${PIPER_BIN:-/usr/local/bin/piper}
       PIPER_MODEL_PATH: ${PIPER_MODEL_PATH:-/models/piper/zh_CN-huayan-medium.onnx}
       PIPER_CONFIG_PATH: ${PIPER_CONFIG_PATH:-/models/piper/zh_CN-huayan-medium.onnx.json}
+      PIPER_NOISE_SCALE: ${PIPER_NOISE_SCALE:-0.4}
+      PIPER_LENGTH_SCALE: ${PIPER_LENGTH_SCALE:-1.05}
+      PIPER_NOISE_W: ${PIPER_NOISE_W:-0.7}
+      PIPER_SENTENCE_SILENCE: ${PIPER_SENTENCE_SILENCE:-0.12}
     volumes:
       - ./data/piper:/models/piper

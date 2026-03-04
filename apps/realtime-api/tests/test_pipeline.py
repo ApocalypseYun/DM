@@ -31,6 +31,12 @@ class FakeTTSClient:
         }
 
 
+class EmptyASRClient:
+    async def transcribe_audio(self, _audio_bytes: bytes, mime_type: str = "audio/wav") -> str:
+        assert mime_type == "audio/webm"
+        return ""
+
+
 def test_audio_commit_runs_asr_dify_and_tts_pipeline() -> None:
     app = create_app(
         asr_client=FakeASRClient(),
@@ -57,15 +63,45 @@ def test_audio_commit_runs_asr_dify_and_tts_pipeline() -> None:
         "avatar_state",
         "asr_final",
         "avatar_state",
-        "assistant_text_final",
         "avatar_state",
+        "assistant_text_final",
         "tts_audio_chunk",
         "avatar_state",
     ]
     assert events[0]["state"] == "listening"
     assert events[1]["text"] == "你好"
     assert events[2]["state"] == "thinking"
-    assert events[3]["text"] == "你好，我在。"
-    assert events[4]["state"] == "speaking"
+    assert events[3]["state"] == "speaking"
+    assert events[4]["text"] == "你好，我在。"
     assert events[5]["audio_base64"]
     assert events[6]["state"] == "idle"
+
+
+def test_empty_asr_does_not_emit_noise_error() -> None:
+    app = create_app(
+        asr_client=EmptyASRClient(),
+        dify_client=FakeDifyClient(),
+        tts_client=FakeTTSClient(),
+    )
+    client = TestClient(app)
+
+    with client.websocket_connect("/ws/realtime") as websocket:
+        assert websocket.receive_json()["type"] == "session_ready"
+
+        websocket.send_json(
+            {
+                "type": "audio_commit",
+                "audio_base64": base64.b64encode(b"noise").decode("ascii"),
+                "mime_type": "audio/webm",
+                "voice_profile_id": "default_female_zh",
+            }
+        )
+
+        events = [websocket.receive_json() for _ in range(2)]
+
+    assert [event["type"] for event in events] == [
+        "avatar_state",
+        "avatar_state",
+    ]
+    assert events[0]["state"] == "listening"
+    assert events[1]["state"] == "idle"

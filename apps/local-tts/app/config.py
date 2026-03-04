@@ -11,6 +11,10 @@ class Settings:
     piper_bin: str = os.getenv("PIPER_BIN", "piper")
     piper_model_path: str = os.getenv("PIPER_MODEL_PATH", "")
     piper_config_path: str = os.getenv("PIPER_CONFIG_PATH", "")
+    piper_noise_scale: str = os.getenv("PIPER_NOISE_SCALE", "0.4")
+    piper_length_scale: str = os.getenv("PIPER_LENGTH_SCALE", "1.05")
+    piper_noise_w: str = os.getenv("PIPER_NOISE_W", "0.7")
+    piper_sentence_silence: str = os.getenv("PIPER_SENTENCE_SILENCE", "0.12")
 
 
 settings = Settings()

@@ -40,6 +40,7 @@ def create_app(synthesizer: Optional[Synthesizer] = None) -> FastAPI:
         return {
             "voice_profile_id": voice_profile_id,
             "audio_format": "wav_base64",
+            "mime_type": "audio/wav",
             "audio_base64": encode_wav_base64(wav_bytes),
             "text": request.text,
         }
