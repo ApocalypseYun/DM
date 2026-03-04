@@ -1,0 +1,21 @@
+export function clampPosition(position, viewport, widgetSize) {
+  const maxX = Math.max(0, viewport.width - widgetSize.width)
+  const maxY = Math.max(0, viewport.height - widgetSize.height)
+
+  return {
+    x: Math.min(Math.max(position.x, 0), maxX),
+    y: Math.min(Math.max(position.y, 0), maxY),
+  }
+}
+
+export function normalizeMountOptions(options) {
+  return {
+    container: options.container ?? null,
+    serverUrl: options.serverUrl,
+    avatarImage: options.avatarImage ?? '/assets/avatar/front.jpg',
+    voiceProfile: options.voiceProfile ?? 'default_female_zh',
+    draggable: options.draggable ?? true,
+    mountMode: options.mountMode ?? 'floating',
+    title: options.title ?? '数字人助手',
+  }
+}

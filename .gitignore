@@ -1,6 +1,12 @@
 .DS_Store
 ._*
 .worktrees/
+.env
+.pytest_cache/
+node_modules/
+dist/
+data/piper/*
+!data/piper/.gitkeep
 __pycache__/
 *.py[cod]
 *.log

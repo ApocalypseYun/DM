@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  realtime-api:
+    build:
+      context: ./apps/realtime-api
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    environment:
+      XINFERENCE_BASE_URL: ${XINFERENCE_BASE_URL:-http://host.docker.internal:9997}
+      DIFY_CHAT_URL: ${DIFY_CHAT_URL:-http://host.docker.internal:88/v1/chat-messages}
+      DIFY_API_KEY: ${DIFY_API_KEY:-}
+      LOCAL_TTS_BASE_URL: ${LOCAL_TTS_BASE_URL:-http://local-tts:8091}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - local-tts
+
+  local-tts:
+    build:
+      context: ./apps/local-tts
+    restart: unless-stopped
+    ports:
+      - "8091:8091"
+    environment:
+      TTS_PROVIDER: ${TTS_PROVIDER:-mock}
+      PIPER_BIN: ${PIPER_BIN:-/usr/local/bin/piper}
+      PIPER_MODEL_PATH: ${PIPER_MODEL_PATH:-/models/piper/zh_CN-huayan-medium.onnx}
+      PIPER_CONFIG_PATH: ${PIPER_CONFIG_PATH:-/models/piper/zh_CN-huayan-medium.onnx.json}
+    volumes:
+      - ./data/piper:/models/piper

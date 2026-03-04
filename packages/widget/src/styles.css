@@ -1,0 +1,114 @@
+.dh-widget-root {
+  width: 280px;
+  user-select: none;
+  font-family: "Helvetica Neue", "PingFang SC", sans-serif;
+}
+
+.dh-widget {
+  background: linear-gradient(180deg, rgba(9, 14, 28, 0.96), rgba(17, 25, 40, 0.94));
+  color: #eef4ff;
+  border: 1px solid rgba(119, 163, 255, 0.25);
+  border-radius: 20px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+}
+
+.dh-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.35), rgba(14, 165, 233, 0.15));
+}
+
+.dh-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dh-toggle {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dh-avatar-shell {
+  position: relative;
+  padding: 14px;
+  background:
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.14), transparent 36%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.9));
+}
+
+.dh-avatar-image {
+  display: block;
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 14px;
+}
+
+.dh-avatar-mouth {
+  position: absolute;
+  left: 50%;
+  bottom: 44px;
+  width: 32px;
+  height: 8px;
+  margin-left: -16px;
+  border-radius: 999px;
+  background: rgba(147, 197, 253, 0.9);
+  box-shadow: 0 0 12px rgba(96, 165, 250, 0.55);
+  transform: scaleY(0.6);
+  transition: transform 120ms ease;
+}
+
+.dh-avatar-mouth.is-speaking {
+  animation: dh-mouth 180ms ease-in-out infinite alternate;
+}
+
+.dh-status-pill {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.dh-transcript {
+  min-height: 92px;
+  padding: 14px 16px 18px;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-line;
+  color: #dbeafe;
+}
+
+.dh-widget[data-state="thinking"] .dh-status-pill {
+  color: #fde68a;
+}
+
+.dh-widget[data-state="speaking"] .dh-status-pill {
+  color: #86efac;
+}
+
+.dh-widget[data-state="listening"] .dh-status-pill {
+  color: #93c5fd;
+}
+
+@keyframes dh-mouth {
+  from {
+    transform: scaleY(0.8);
+  }
+  to {
+    transform: scaleY(2.1);
+  }
+}
