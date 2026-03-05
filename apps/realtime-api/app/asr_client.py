@@ -7,7 +7,7 @@ class ASRClient:
     """Adapter for the existing Xinference ASR service."""
 
     @staticmethod
-    def _is_empty_funasr_response(response: httpx.Response) -> bool:
+    def _is_recoverable_asr_failure(response: httpx.Response) -> bool:
         if response.status_code != 500:
             return False
 
@@ -22,7 +22,13 @@ class ASRClient:
         else:
             detail = response.text.lower()
 
-        return "funasr returned empty or invalid result" in detail
+        recoverable_markers = (
+            "funasr returned empty or invalid result",
+            "failed to load audio",
+            "invalid data found when processing input",
+            "error opening input file",
+        )
+        return any(marker in detail for marker in recoverable_markers)
 
     async def transcribe_audio(self, audio_bytes: bytes, mime_type: str = "audio/wav") -> str:
         if not audio_bytes:
@@ -39,7 +45,7 @@ class ASRClient:
 
         async with httpx.AsyncClient(timeout=60) as client:
             response = await client.post(url, files=files)
-            if self._is_empty_funasr_response(response):
+            if self._is_recoverable_asr_failure(response):
                 return ""
             response.raise_for_status()
             payload = response.json()

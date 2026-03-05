@@ -53,6 +53,22 @@ def test_transcribe_audio_treats_funasr_empty_500_as_empty_text(
     assert text == ""
 
 
+def test_transcribe_audio_treats_audio_decode_500_as_empty_text(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    request = httpx.Request("POST", "http://unit.test/v1/audio/transcriptions")
+    response = httpx.Response(
+        500,
+        request=request,
+        json={"detail": "Failed to load audio: Error opening input file /tmp/tmp123"},
+    )
+    monkeypatch.setattr(httpx, "AsyncClient", lambda *args, **kwargs: StubAsyncClient(response))
+
+    text = asyncio.run(ASRClient().transcribe_audio(b"noise", mime_type="audio/webm"))
+
+    assert text == ""
+
+
 def test_transcribe_audio_keeps_non_funasr_errors(monkeypatch: pytest.MonkeyPatch) -> None:
     request = httpx.Request("POST", "http://unit.test/v1/audio/transcriptions")
     response = httpx.Response(500, request=request, json={"detail": "upstream exploded"})
