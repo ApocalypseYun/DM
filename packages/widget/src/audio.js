@@ -210,6 +210,7 @@ export class AudioRuntime {
       await this.audioContext.resume()
     }
     const buffer = base64ToArrayBuffer(audioBase64)
+    this.callbacks.onPlaybackChunk?.(buffer.slice(0))
     const decoded = await this.audioContext.decodeAudioData(buffer.slice(0))
     const source = this.audioContext.createBufferSource()
     const analyser = this.audioContext.createAnalyser()

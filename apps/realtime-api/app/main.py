@@ -53,9 +53,15 @@ def create_app(
     <script type="module">
       window.DigitalHumanWidget.mount({
         serverUrl: window.location.origin,
+        avatarRenderer: "dh_live",
         avatarImage: "/assets/avatar/front.jpg",
         voiceProfile: "default_female_zh",
-        draggable: true
+        draggable: true,
+        dhLive: {
+          runtimeBaseUrl: "/widget/dh-live",
+          assetBaseUrl: "/widget/dh-live/assets/default",
+          frameRate: 25
+        }
       })
     </script>
   </body>

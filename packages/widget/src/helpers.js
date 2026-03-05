@@ -10,15 +10,22 @@ export function clampPosition(position, viewport, widgetSize) {
 
 export function normalizeMountOptions(options) {
   const rawMouthRig = options.mouthRig ?? {}
+  const rawDhLive = options.dhLive ?? {}
 
   return {
     container: options.container ?? null,
     serverUrl: options.serverUrl,
     avatarImage: options.avatarImage ?? '/assets/avatar/front.jpg',
+    avatarRenderer: options.avatarRenderer ?? 'dh_live',
     voiceProfile: options.voiceProfile ?? 'default_female_zh',
     draggable: options.draggable ?? true,
     mountMode: options.mountMode ?? 'floating',
     title: options.title ?? '数字人助手',
+    dhLive: {
+      runtimeBaseUrl: rawDhLive.runtimeBaseUrl ?? '/widget/dh-live',
+      assetBaseUrl: rawDhLive.assetBaseUrl ?? '/widget/dh-live/assets/default',
+      frameRate: rawDhLive.frameRate ?? 25,
+    },
     mouthRig: {
       xPercent: rawMouthRig.xPercent ?? 50,
       yPercent: rawMouthRig.yPercent ?? 77.5,

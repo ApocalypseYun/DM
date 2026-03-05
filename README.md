@@ -165,9 +165,15 @@ After serving the widget assets, mount it from any page:
 
   window.DigitalHumanWidget.mount({
     serverUrl: 'http://127.0.0.1:8090',
+    avatarRenderer: 'dh_live',
     avatarImage: '/assets/avatar/front.jpg',
     voiceProfile: 'default_female_zh',
     draggable: true,
+    dhLive: {
+      runtimeBaseUrl: '/widget/dh-live',
+      assetBaseUrl: '/widget/dh-live/assets/default',
+      frameRate: 25,
+    },
   })
 </script>
 ```

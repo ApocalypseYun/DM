@@ -36,6 +36,7 @@ export class DigitalHumanWidget {
       onEvent: (payload) => this.handleServerEvent(payload),
       onPlaybackLevel: (level) => this.view.setMouthLevel(level),
       onPlaybackStateChange: (active) => this._handlePlaybackState(active),
+      onPlaybackChunk: (audioBuffer) => this.view.pushAudioChunk(audioBuffer),
     })
 
     this._applyPosition()
@@ -57,6 +58,7 @@ export class DigitalHumanWidget {
       }
 
       await this.audio.stopStreaming()
+      this.view.clearSpeechAudio()
     } catch (error) {
       this.listening = false
       this.view.setListeningActive(false)
@@ -85,6 +87,7 @@ export class DigitalHumanWidget {
         break
       case 'interrupt_ack':
         this.audio.stopPlayback()
+        this.view.clearSpeechAudio()
         this.view.setState('listening')
         break
       case 'tts_audio_chunk':
@@ -93,6 +96,8 @@ export class DigitalHumanWidget {
         await this.audio.playBase64Wav(payload.audio_base64)
         break
       case 'error':
+        this.audio.stopPlayback()
+        this.view.clearSpeechAudio()
         this.view.appendTranscript('系统', payload.detail)
         this.view.setState('idle')
         break
@@ -165,5 +170,11 @@ export class DigitalHumanWidget {
     this.root.style.left = `${this.position.x}px`
     this.root.style.top = `${this.position.y}px`
     this.root.style.zIndex = '9999'
+  }
+
+  async destroy() {
+    await this.audio.stopStreaming()
+    this.view.destroy()
+    this.root.remove()
   }
 }

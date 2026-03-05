@@ -1,15 +1,24 @@
+import { DHLiveAvatar } from './dh_live_avatar.js'
+
 export class AvatarView {
   constructor(root, options) {
     this.root = root
     this.options = options
     this.state = 'idle'
     this.transcriptLines = []
+    this.renderer = null
+    this.rendererMode = options.avatarRenderer === 'dh_live' ? 'dh_live' : 'image'
     this._render()
-    this.setMouthLevel(0)
+    if (this.rendererMode === 'dh_live') {
+      this._initializeDhLive()
+    } else {
+      this.setMouthLevel(0)
+    }
   }
 
   _render() {
     this.root.className = 'dh-widget-root'
+    const imageRendererVisible = this.rendererMode === 'image'
     this.root.innerHTML = `
       <div class="dh-widget" data-state="idle">
         <div class="dh-header">
@@ -18,9 +27,12 @@ export class AvatarView {
         </div>
         <div class="dh-avatar-shell">
           <div class="dh-avatar-stage">
-            <img class="dh-avatar-image" alt="Digital human avatar" />
-            <img class="dh-avatar-mouth-layer" alt="" aria-hidden="true" />
-            <div class="dh-avatar-mouth-aperture"></div>
+            <div class="dh-avatar-live${this.rendererMode === 'dh_live' ? ' is-active' : ''}"></div>
+            <div class="dh-avatar-image-renderer${imageRendererVisible ? ' is-active' : ''}">
+              <img class="dh-avatar-image" alt="Digital human avatar" />
+              <img class="dh-avatar-mouth-layer" alt="" aria-hidden="true" />
+              <div class="dh-avatar-mouth-aperture"></div>
+            </div>
           </div>
           <div class="dh-status-pill">idle</div>
         </div>
@@ -31,6 +43,8 @@ export class AvatarView {
     this.widget = this.root.querySelector('.dh-widget')
     this.titleEl = this.root.querySelector('.dh-title')
     this.toggleButton = this.root.querySelector('.dh-toggle')
+    this.liveEl = this.root.querySelector('.dh-avatar-live')
+    this.imageRendererEl = this.root.querySelector('.dh-avatar-image-renderer')
     this.imageEl = this.root.querySelector('.dh-avatar-image')
     this.mouthLayerEl = this.root.querySelector('.dh-avatar-mouth-layer')
     this.mouthApertureEl = this.root.querySelector('.dh-avatar-mouth-aperture')
@@ -48,11 +62,32 @@ export class AvatarView {
     this.root.style.setProperty('--dh-mouth-height', `${mouthRig.heightPercent}%`)
   }
 
+  async _initializeDhLive() {
+    try {
+      this.renderer = new DHLiveAvatar(this.liveEl, this.options.dhLive)
+      await this.renderer.init()
+      this._setRendererMode('dh_live')
+      return
+    } catch (error) {
+      console.warn('[dh-widget] failed to initialize dh_live renderer, falling back to image renderer', error)
+      this.renderer?.destroy()
+      this.renderer = null
+      this._setRendererMode('image')
+      this.setMouthLevel(0)
+    }
+  }
+
+  _setRendererMode(mode) {
+    this.rendererMode = mode
+    this.liveEl.classList.toggle('is-active', mode === 'dh_live')
+    this.imageRendererEl.classList.toggle('is-active', mode === 'image')
+  }
+
   setState(nextState) {
     this.state = nextState
     this.widget.dataset.state = nextState
     this.statusEl.textContent = nextState
-    if (nextState !== 'speaking') {
+    if (nextState !== 'speaking' && this.rendererMode === 'image') {
       this.setMouthLevel(0)
     }
   }
@@ -71,6 +106,9 @@ export class AvatarView {
   }
 
   setMouthLevel(level) {
+    if (this.rendererMode !== 'image') {
+      return
+    }
     const clamped = Math.max(0, Math.min(1, Number(level) || 0))
     const jawShift = clamped * 3.8
     const jawScale = 1 + clamped * 0.22
@@ -82,5 +120,18 @@ export class AvatarView {
     this.mouthApertureEl.style.transform = `translateY(${(jawShift * 0.4).toFixed(2)}px) scaleY(${apertureScaleY.toFixed(3)})`
     this.mouthApertureEl.style.opacity = apertureOpacity.toFixed(3)
     this.mouthApertureEl.style.filter = `blur(${apertureBlur.toFixed(2)}px)`
+  }
+
+  pushAudioChunk(arrayBuffer) {
+    this.renderer?.pushAudioChunk(arrayBuffer)
+  }
+
+  clearSpeechAudio() {
+    this.renderer?.clearAudio()
+  }
+
+  destroy() {
+    this.renderer?.destroy()
+    this.renderer = null
   }
 }

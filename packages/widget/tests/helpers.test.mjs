@@ -24,8 +24,14 @@ test('normalizeMountOptions fills defaults', () => {
   })
 
   assert.equal(options.voiceProfile, 'default_female_zh')
+  assert.equal(options.avatarRenderer, 'dh_live')
   assert.equal(options.draggable, true)
   assert.equal(options.mountMode, 'floating')
+  assert.deepEqual(options.dhLive, {
+    runtimeBaseUrl: '/widget/dh-live',
+    assetBaseUrl: '/widget/dh-live/assets/default',
+    frameRate: 25,
+  })
   assert.deepEqual(options.mouthRig, {
     xPercent: 50,
     yPercent: 77.5,
