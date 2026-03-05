@@ -5,6 +5,7 @@ export class AvatarView {
     this.state = 'idle'
     this.transcriptLines = []
     this._render()
+    this.setMouthLevel(0)
   }
 
   _render() {
@@ -40,7 +41,9 @@ export class AvatarView {
     this.state = nextState
     this.widget.dataset.state = nextState
     this.statusEl.textContent = nextState
-    this.mouthEl.classList.toggle('is-speaking', nextState === 'speaking')
+    if (nextState !== 'speaking') {
+      this.setMouthLevel(0)
+    }
   }
 
   setListeningActive(isActive) {
@@ -54,5 +57,13 @@ export class AvatarView {
     this.transcriptLines.push(`${role}: ${text}`)
     this.transcriptLines = this.transcriptLines.slice(-4)
     this.transcriptEl.textContent = this.transcriptLines.join('\n')
+  }
+
+  setMouthLevel(level) {
+    const clamped = Math.max(0, Math.min(1, Number(level) || 0))
+    const scale = 0.55 + clamped * 2.1
+    const opacity = 0.62 + clamped * 0.38
+    this.mouthEl.style.transform = `scaleY(${scale.toFixed(3)})`
+    this.mouthEl.style.opacity = opacity.toFixed(3)
   }
 }

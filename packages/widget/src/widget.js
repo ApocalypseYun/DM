@@ -22,6 +22,8 @@ export class DigitalHumanWidget {
     this.dragOffset = { x: 0, y: 0 }
     this.dragging = false
     this.listening = false
+    this.playbackActive = false
+    this.pendingIdleAfterPlayback = false
 
     ensureStyles()
 
@@ -32,6 +34,8 @@ export class DigitalHumanWidget {
     this.view = new AvatarView(this.root, this.options)
     this.audio = new AudioRuntime(this.options.serverUrl, {
       onEvent: (payload) => this.handleServerEvent(payload),
+      onPlaybackLevel: (level) => this.view.setMouthLevel(level),
+      onPlaybackStateChange: (active) => this._handlePlaybackState(active),
     })
 
     this._applyPosition()
@@ -73,6 +77,10 @@ export class DigitalHumanWidget {
         this.view.appendTranscript('助手', payload.text)
         break
       case 'avatar_state':
+        if (payload.state === 'idle' && this.playbackActive) {
+          this.pendingIdleAfterPlayback = true
+          break
+        }
         this.view.setState(payload.state)
         break
       case 'interrupt_ack':
@@ -80,6 +88,7 @@ export class DigitalHumanWidget {
         this.view.setState('listening')
         break
       case 'tts_audio_chunk':
+        this.pendingIdleAfterPlayback = false
         this.view.setState('speaking')
         await this.audio.playBase64Wav(payload.audio_base64)
         break
@@ -89,6 +98,24 @@ export class DigitalHumanWidget {
         break
       default:
         break
+    }
+  }
+
+  _handlePlaybackState(active) {
+    this.playbackActive = active
+    if (active) {
+      this.view.setState('speaking')
+      return
+    }
+
+    if (this.pendingIdleAfterPlayback) {
+      this.pendingIdleAfterPlayback = false
+      this.view.setState(this.listening ? 'listening' : 'idle')
+      return
+    }
+
+    if (this.view.state === 'speaking') {
+      this.view.setState(this.listening ? 'listening' : 'idle')
     }
   }
 

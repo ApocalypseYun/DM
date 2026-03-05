@@ -42,6 +42,9 @@ export class AudioRuntime {
     this.segmentChunks = []
     this.segmentMimeType = 'audio/webm'
     this.playbackSource = null
+    this.playbackAnalyser = null
+    this.playbackMeterTimer = null
+    this.playbackActive = false
     this.isStreaming = false
     this.lastSpeechAt = 0
     this.segmentStartedAt = 0
@@ -150,14 +153,14 @@ export class AudioRuntime {
     this.analysisTimer = window.setInterval(() => {
       const level = this._readLevel()
       const now = Date.now()
-        if (level > this.voiceActivationThreshold) {
-          this.lastSpeechAt = now
-          if (!this.segmentActive) {
-            this.segmentActive = true
-            this.segmentStartedAt = now
-            this.segmentChunks = []
-            this.websocket?.send(JSON.stringify({ type: 'barge_in' }))
-            if (this.mediaRecorder?.state === 'inactive') {
+      if (level > this.voiceActivationThreshold) {
+        this.lastSpeechAt = now
+        if (!this.segmentActive) {
+          this.segmentActive = true
+          this.segmentStartedAt = now
+          this.segmentChunks = []
+          this.websocket?.send(JSON.stringify({ type: 'barge_in' }))
+          if (this.mediaRecorder?.state === 'inactive') {
             this.mediaRecorder.start()
           }
         }
@@ -175,6 +178,7 @@ export class AudioRuntime {
 
   async stopStreaming() {
     this.isStreaming = false
+    this.stopPlayback()
     if (this.analysisTimer) {
       clearInterval(this.analysisTimer)
       this.analysisTimer = null
@@ -202,44 +206,89 @@ export class AudioRuntime {
     if (!this.audioContext || this.audioContext.state === 'closed') {
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)()
     }
+    if (this.audioContext.state === 'suspended') {
+      await this.audioContext.resume()
+    }
     const buffer = base64ToArrayBuffer(audioBase64)
     const decoded = await this.audioContext.decodeAudioData(buffer.slice(0))
     const source = this.audioContext.createBufferSource()
+    const analyser = this.audioContext.createAnalyser()
+    analyser.fftSize = 256
     source.buffer = decoded
-    source.connect(this.audioContext.destination)
+    source.connect(analyser)
+    analyser.connect(this.audioContext.destination)
     this.playbackSource = source
+    this.playbackAnalyser = analyser
+    this._setPlaybackActive(true)
+    this._startPlaybackMeter()
     source.addEventListener('ended', () => {
       if (this.playbackSource === source) {
+        this._stopPlaybackMeter()
+        this.playbackAnalyser?.disconnect()
+        this.playbackAnalyser = null
         this.playbackSource = null
+        this._setPlaybackActive(false)
       }
     })
     source.start()
   }
 
   stopPlayback() {
-    if (!this.playbackSource) {
-      return
-    }
-    try {
-      this.playbackSource.stop()
-    } catch (_error) {
-      // Ignore stop races when the source already ended.
+    const source = this.playbackSource
+    if (source) {
+      try {
+        source.stop()
+      } catch (_error) {
+        // Ignore stop races when the source already ended.
+      }
     }
     this.playbackSource = null
+    this._stopPlaybackMeter()
+    this.playbackAnalyser?.disconnect()
+    this.playbackAnalyser = null
+    this._setPlaybackActive(false)
   }
 
   _readLevel() {
-    if (!this.analyser) {
+    return this._readAnalyserLevel(this.analyser)
+  }
+
+  _readAnalyserLevel(analyser) {
+    if (!analyser) {
       return 0
     }
-    const samples = new Uint8Array(this.analyser.frequencyBinCount)
-    this.analyser.getByteTimeDomainData(samples)
+    const samples = new Uint8Array(analyser.frequencyBinCount)
+    analyser.getByteTimeDomainData(samples)
     let total = 0
     for (let index = 0; index < samples.length; index += 1) {
       const centered = (samples[index] - 128) / 128
       total += centered * centered
     }
     return Math.sqrt(total / samples.length)
+  }
+
+  _startPlaybackMeter() {
+    this._stopPlaybackMeter()
+    this.playbackMeterTimer = window.setInterval(() => {
+      const level = this._readAnalyserLevel(this.playbackAnalyser)
+      this.callbacks.onPlaybackLevel?.(Math.min(1, level * 4))
+    }, 40)
+  }
+
+  _stopPlaybackMeter() {
+    if (this.playbackMeterTimer) {
+      clearInterval(this.playbackMeterTimer)
+      this.playbackMeterTimer = null
+    }
+    this.callbacks.onPlaybackLevel?.(0)
+  }
+
+  _setPlaybackActive(active) {
+    if (this.playbackActive === active) {
+      return
+    }
+    this.playbackActive = active
+    this.callbacks.onPlaybackStateChange?.(active)
   }
 
   _normalizeStartError(error) {

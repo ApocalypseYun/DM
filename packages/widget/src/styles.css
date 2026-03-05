@@ -65,11 +65,8 @@
   background: rgba(147, 197, 253, 0.9);
   box-shadow: 0 0 12px rgba(96, 165, 250, 0.55);
   transform: scaleY(0.6);
-  transition: transform 120ms ease;
-}
-
-.dh-avatar-mouth.is-speaking {
-  animation: dh-mouth 180ms ease-in-out infinite alternate;
+  opacity: 0.62;
+  transition: transform 60ms linear, opacity 60ms linear;
 }
 
 .dh-status-pill {
@@ -100,15 +97,10 @@
   color: #86efac;
 }
 
-.dh-widget[data-state="listening"] .dh-status-pill {
-  color: #93c5fd;
+.dh-widget[data-state="speaking"] .dh-avatar-mouth {
+  box-shadow: 0 0 16px rgba(96, 165, 250, 0.75);
 }
 
-@keyframes dh-mouth {
-  from {
-    transform: scaleY(0.8);
-  }
-  to {
-    transform: scaleY(2.1);
-  }
+.dh-widget[data-state="listening"] .dh-status-pill {
+  color: #93c5fd;
 }
