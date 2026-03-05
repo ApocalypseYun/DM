@@ -2,6 +2,10 @@
   width: 280px;
   user-select: none;
   font-family: "Helvetica Neue", "PingFang SC", sans-serif;
+  --dh-mouth-x: 50%;
+  --dh-mouth-y: 77.5%;
+  --dh-mouth-width: 12%;
+  --dh-mouth-height: 4.6%;
 }
 
 .dh-widget {
@@ -46,6 +50,8 @@
 }
 
 .dh-avatar-image {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 100%;
   height: 220px;
@@ -54,19 +60,39 @@
   border-radius: 14px;
 }
 
-.dh-avatar-mouth {
+.dh-avatar-stage {
+  position: relative;
+}
+
+.dh-avatar-mouth-layer {
   position: absolute;
-  left: 50%;
-  bottom: 44px;
-  width: 32px;
-  height: 8px;
-  margin-left: -16px;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 14px;
+  clip-path: ellipse(calc(var(--dh-mouth-width) * 0.5) calc(var(--dh-mouth-height) * 0.5) at var(--dh-mouth-x) var(--dh-mouth-y));
+  transform-origin: var(--dh-mouth-x) var(--dh-mouth-y);
+  transition: transform 40ms linear;
+  pointer-events: none;
+}
+
+.dh-avatar-mouth-aperture {
+  position: absolute;
+  z-index: 2;
+  left: calc(var(--dh-mouth-x) - var(--dh-mouth-width) * 0.5);
+  top: calc(var(--dh-mouth-y) - var(--dh-mouth-height) * 0.5);
+  width: var(--dh-mouth-width);
+  height: var(--dh-mouth-height);
   border-radius: 999px;
-  background: rgba(147, 197, 253, 0.9);
-  box-shadow: 0 0 12px rgba(96, 165, 250, 0.55);
-  transform: scaleY(0.6);
-  opacity: 0.62;
-  transition: transform 60ms linear, opacity 60ms linear;
+  background: radial-gradient(circle at center, rgba(10, 12, 20, 0.85), rgba(10, 12, 20, 0.05));
+  opacity: 0;
+  transform: scaleY(0.25);
+  transform-origin: center center;
+  transition: transform 40ms linear, opacity 40ms linear, filter 40ms linear;
+  pointer-events: none;
 }
 
 .dh-status-pill {
@@ -97,8 +123,8 @@
   color: #86efac;
 }
 
-.dh-widget[data-state="speaking"] .dh-avatar-mouth {
-  box-shadow: 0 0 16px rgba(96, 165, 250, 0.75);
+.dh-widget[data-state="speaking"] .dh-avatar-mouth-layer {
+  filter: saturate(1.03);
 }
 
 .dh-widget[data-state="listening"] .dh-status-pill {

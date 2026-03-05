@@ -10,6 +10,12 @@ window.DigitalHumanWidget.mount({
   avatarImage: '/assets/avatar/front.jpg',
   voiceProfile: 'default_female_zh',
   draggable: true,
+  mouthRig: {
+    xPercent: 50,
+    yPercent: 77.5,
+    widthPercent: 12,
+    heightPercent: 4.6,
+  },
 })
 ```
 

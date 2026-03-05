@@ -17,8 +17,11 @@ export class AvatarView {
           <button class="dh-toggle" type="button">Mic</button>
         </div>
         <div class="dh-avatar-shell">
-          <img class="dh-avatar-image" alt="Digital human avatar" />
-          <div class="dh-avatar-mouth"></div>
+          <div class="dh-avatar-stage">
+            <img class="dh-avatar-image" alt="Digital human avatar" />
+            <img class="dh-avatar-mouth-layer" alt="" aria-hidden="true" />
+            <div class="dh-avatar-mouth-aperture"></div>
+          </div>
           <div class="dh-status-pill">idle</div>
         </div>
         <div class="dh-transcript"></div>
@@ -29,12 +32,20 @@ export class AvatarView {
     this.titleEl = this.root.querySelector('.dh-title')
     this.toggleButton = this.root.querySelector('.dh-toggle')
     this.imageEl = this.root.querySelector('.dh-avatar-image')
-    this.mouthEl = this.root.querySelector('.dh-avatar-mouth')
+    this.mouthLayerEl = this.root.querySelector('.dh-avatar-mouth-layer')
+    this.mouthApertureEl = this.root.querySelector('.dh-avatar-mouth-aperture')
     this.statusEl = this.root.querySelector('.dh-status-pill')
     this.transcriptEl = this.root.querySelector('.dh-transcript')
 
     this.titleEl.textContent = this.options.title
     this.imageEl.src = this.options.avatarImage
+    this.mouthLayerEl.src = this.options.avatarImage
+
+    const { mouthRig } = this.options
+    this.root.style.setProperty('--dh-mouth-x', `${mouthRig.xPercent}%`)
+    this.root.style.setProperty('--dh-mouth-y', `${mouthRig.yPercent}%`)
+    this.root.style.setProperty('--dh-mouth-width', `${mouthRig.widthPercent}%`)
+    this.root.style.setProperty('--dh-mouth-height', `${mouthRig.heightPercent}%`)
   }
 
   setState(nextState) {
@@ -61,9 +72,15 @@ export class AvatarView {
 
   setMouthLevel(level) {
     const clamped = Math.max(0, Math.min(1, Number(level) || 0))
-    const scale = 0.55 + clamped * 2.1
-    const opacity = 0.62 + clamped * 0.38
-    this.mouthEl.style.transform = `scaleY(${scale.toFixed(3)})`
-    this.mouthEl.style.opacity = opacity.toFixed(3)
+    const jawShift = clamped * 3.8
+    const jawScale = 1 + clamped * 0.22
+    const apertureScaleY = 0.25 + clamped * 2.35
+    const apertureOpacity = clamped * 0.72
+    const apertureBlur = 0.6 + clamped * 2.1
+
+    this.mouthLayerEl.style.transform = `translateY(${jawShift.toFixed(2)}px) scaleY(${jawScale.toFixed(3)})`
+    this.mouthApertureEl.style.transform = `translateY(${(jawShift * 0.4).toFixed(2)}px) scaleY(${apertureScaleY.toFixed(3)})`
+    this.mouthApertureEl.style.opacity = apertureOpacity.toFixed(3)
+    this.mouthApertureEl.style.filter = `blur(${apertureBlur.toFixed(2)}px)`
   }
 }

@@ -9,6 +9,8 @@ export function clampPosition(position, viewport, widgetSize) {
 }
 
 export function normalizeMountOptions(options) {
+  const rawMouthRig = options.mouthRig ?? {}
+
   return {
     container: options.container ?? null,
     serverUrl: options.serverUrl,
@@ -17,6 +19,12 @@ export function normalizeMountOptions(options) {
     draggable: options.draggable ?? true,
     mountMode: options.mountMode ?? 'floating',
     title: options.title ?? '数字人助手',
+    mouthRig: {
+      xPercent: rawMouthRig.xPercent ?? 50,
+      yPercent: rawMouthRig.yPercent ?? 77.5,
+      widthPercent: rawMouthRig.widthPercent ?? 12,
+      heightPercent: rawMouthRig.heightPercent ?? 4.6,
+    },
   }
 }
 
