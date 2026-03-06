@@ -1,4 +1,7 @@
 import { DHLiveAvatar } from './dh_live_avatar.js'
+import { ThreeFullBodyAvatar } from './three_fullbody_avatar.js'
+
+const SUPPORTED_RENDERERS = new Set(['three_fullbody', 'dh_live', 'image'])
 
 export class AvatarView {
   constructor(root, options) {
@@ -7,10 +10,12 @@ export class AvatarView {
     this.state = 'idle'
     this.transcriptLines = []
     this.renderer = null
-    this.rendererMode = options.avatarRenderer === 'dh_live' ? 'dh_live' : 'image'
+    this.rendererMode = SUPPORTED_RENDERERS.has(options.avatarRenderer) ? options.avatarRenderer : 'image'
     this._render()
-    if (this.rendererMode === 'dh_live') {
-      this._initializeDhLive()
+    if (this.rendererMode === 'three_fullbody') {
+      this._initializeThreeFullBody()
+    } else if (this.rendererMode === 'dh_live') {
+      this._initializeDhLive(true)
     } else {
       this.setMouthLevel(0)
     }
@@ -27,6 +32,7 @@ export class AvatarView {
         </div>
         <div class="dh-avatar-shell">
           <div class="dh-avatar-stage">
+            <div class="dh-avatar-three${this.rendererMode === 'three_fullbody' ? ' is-active' : ''}"></div>
             <div class="dh-avatar-live${this.rendererMode === 'dh_live' ? ' is-active' : ''}"></div>
             <div class="dh-avatar-image-renderer${imageRendererVisible ? ' is-active' : ''}">
               <img class="dh-avatar-image" alt="Digital human avatar" />
@@ -43,6 +49,7 @@ export class AvatarView {
     this.widget = this.root.querySelector('.dh-widget')
     this.titleEl = this.root.querySelector('.dh-title')
     this.toggleButton = this.root.querySelector('.dh-toggle')
+    this.threeEl = this.root.querySelector('.dh-avatar-three')
     this.liveEl = this.root.querySelector('.dh-avatar-live')
     this.imageRendererEl = this.root.querySelector('.dh-avatar-image-renderer')
     this.imageEl = this.root.querySelector('.dh-avatar-image')
@@ -67,16 +74,33 @@ export class AvatarView {
     this.root.style.setProperty('--dh-transcript-min-height', `${layout.transcriptMinHeight}px`)
   }
 
-  async _initializeDhLive() {
+  async _initializeThreeFullBody() {
+    try {
+      this.renderer = new ThreeFullBodyAvatar(this.threeEl, this.options.threeFullBody)
+      await this.renderer.init()
+      this._setRendererMode('three_fullbody')
+      return
+    } catch (error) {
+      console.warn('[dh-widget] failed to initialize three_fullbody renderer, falling back to dh_live', error)
+      this.renderer?.destroy()
+      this.renderer = null
+      await this._initializeDhLive(true)
+    }
+  }
+
+  async _initializeDhLive(allowImageFallback) {
     try {
       this.renderer = new DHLiveAvatar(this.liveEl, this.options.dhLive)
       await this.renderer.init()
       this._setRendererMode('dh_live')
       return
     } catch (error) {
-      console.warn('[dh-widget] failed to initialize dh_live renderer, falling back to image renderer', error)
+      console.warn('[dh-widget] failed to initialize dh_live renderer', error)
       this.renderer?.destroy()
       this.renderer = null
+      if (!allowImageFallback) {
+        return
+      }
       this._setRendererMode('image')
       this.setMouthLevel(0)
     }
@@ -84,6 +108,7 @@ export class AvatarView {
 
   _setRendererMode(mode) {
     this.rendererMode = mode
+    this.threeEl.classList.toggle('is-active', mode === 'three_fullbody')
     this.liveEl.classList.toggle('is-active', mode === 'dh_live')
     this.imageRendererEl.classList.toggle('is-active', mode === 'image')
   }
@@ -92,6 +117,7 @@ export class AvatarView {
     this.state = nextState
     this.widget.dataset.state = nextState
     this.statusEl.textContent = nextState
+    this.renderer?.setState?.(nextState)
     if (nextState !== 'speaking' && this.rendererMode === 'image') {
       this.setMouthLevel(0)
     }
@@ -111,10 +137,14 @@ export class AvatarView {
   }
 
   setMouthLevel(level) {
+    const clamped = Math.max(0, Math.min(1, Number(level) || 0))
+    if (this.rendererMode === 'three_fullbody') {
+      this.renderer?.setMouthLevel(clamped)
+      return
+    }
     if (this.rendererMode !== 'image') {
       return
     }
-    const clamped = Math.max(0, Math.min(1, Number(level) || 0))
     const jawShift = clamped * 3.8
     const jawScale = 1 + clamped * 0.22
     const apertureScaleY = 0.25 + clamped * 2.35

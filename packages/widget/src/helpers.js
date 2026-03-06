@@ -12,6 +12,7 @@ export function normalizeMountOptions(options) {
   const normalizedOptions = options ?? {}
   const rawMouthRig = normalizedOptions.mouthRig ?? {}
   const rawDhLive = normalizedOptions.dhLive ?? {}
+  const rawThreeFullBody = normalizedOptions.threeFullBody ?? {}
   const rawLayout = normalizedOptions.layout ?? {}
   const frameMode = rawLayout.frameMode ?? 'full_body'
 
@@ -33,7 +34,7 @@ export function normalizeMountOptions(options) {
     container: normalizedOptions.container ?? null,
     serverUrl: normalizedOptions.serverUrl,
     avatarImage: normalizedOptions.avatarImage ?? '/assets/avatar/front.jpg',
-    avatarRenderer: normalizedOptions.avatarRenderer ?? 'dh_live',
+    avatarRenderer: normalizedOptions.avatarRenderer ?? 'three_fullbody',
     voiceProfile: normalizedOptions.voiceProfile ?? 'default_female_zh',
     draggable: normalizedOptions.draggable ?? true,
     mountMode: normalizedOptions.mountMode ?? 'floating',
@@ -49,6 +50,9 @@ export function normalizeMountOptions(options) {
       runtimeBaseUrl: rawDhLive.runtimeBaseUrl ?? '/widget/dh-live',
       assetBaseUrl: rawDhLive.assetBaseUrl ?? '/widget/dh-live/assets/default',
       frameRate: rawDhLive.frameRate ?? 25,
+    },
+    threeFullBody: {
+      modelUrl: rawThreeFullBody.modelUrl ?? '/widget/models/RobotExpressive.glb',
     },
     mouthRig: {
       xPercent: rawMouthRig.xPercent ?? 50,

@@ -24,7 +24,7 @@ test('normalizeMountOptions fills defaults', () => {
   })
 
   assert.equal(options.voiceProfile, 'default_female_zh')
-  assert.equal(options.avatarRenderer, 'dh_live')
+  assert.equal(options.avatarRenderer, 'three_fullbody')
   assert.equal(options.draggable, true)
   assert.equal(options.mountMode, 'floating')
   assert.deepEqual(options.layout, {
@@ -38,6 +38,9 @@ test('normalizeMountOptions fills defaults', () => {
     runtimeBaseUrl: '/widget/dh-live',
     assetBaseUrl: '/widget/dh-live/assets/default',
     frameRate: 25,
+  })
+  assert.deepEqual(options.threeFullBody, {
+    modelUrl: '/widget/models/RobotExpressive.glb',
   })
   assert.deepEqual(options.mouthRig, {
     xPercent: 50,

@@ -165,10 +165,13 @@ After serving the widget assets, mount it from any page:
 
   window.DigitalHumanWidget.mount({
     serverUrl: 'http://127.0.0.1:8090',
-    avatarRenderer: 'dh_live',
+    avatarRenderer: 'three_fullbody',
     avatarImage: '/assets/avatar/front.jpg',
     voiceProfile: 'default_female_zh',
     draggable: true,
+    threeFullBody: {
+      modelUrl: '/widget/models/RobotExpressive.glb',
+    },
     dhLive: {
       runtimeBaseUrl: '/widget/dh-live',
       assetBaseUrl: '/widget/dh-live/assets/default',

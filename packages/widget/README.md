@@ -7,10 +7,13 @@ Embeddable browser widget for the realtime digital-human experience.
 ```js
 window.DigitalHumanWidget.mount({
   serverUrl: 'https://your-host.example',
-  avatarRenderer: 'dh_live',
+  avatarRenderer: 'three_fullbody',
   avatarImage: '/assets/avatar/front.jpg',
   voiceProfile: 'default_female_zh',
   draggable: true,
+  threeFullBody: {
+    modelUrl: '/widget/models/RobotExpressive.glb',
+  },
   dhLive: {
     runtimeBaseUrl: '/widget/dh-live',
     assetBaseUrl: '/widget/dh-live/assets/default',
@@ -36,5 +39,5 @@ window.DigitalHumanWidget.mount({
 - opens a realtime WebSocket session
 - streams microphone audio in chunks
 - emits barge-in when the user starts speaking
-- renders a draggable floating avatar (`dh_live` renderer with image fallback)
+- renders a draggable floating avatar (`three_fullbody` -> `dh_live` -> image fallback chain)
 - plays returned TTS audio and updates avatar states

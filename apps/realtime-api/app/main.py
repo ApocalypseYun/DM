@@ -53,10 +53,13 @@ def create_app(
     <script type="module">
       window.DigitalHumanWidget.mount({
         serverUrl: window.location.origin,
-        avatarRenderer: "dh_live",
+        avatarRenderer: "three_fullbody",
         avatarImage: "/assets/avatar/front.jpg",
         voiceProfile: "default_female_zh",
         draggable: true,
+        threeFullBody: {
+          modelUrl: "/widget/models/RobotExpressive.glb"
+        },
         dhLive: {
           runtimeBaseUrl: "/widget/dh-live",
           assetBaseUrl: "/widget/dh-live/assets/default",
