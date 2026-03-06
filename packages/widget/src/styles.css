@@ -1,14 +1,19 @@
 .dh-widget-root {
-  width: 280px;
+  width: var(--dh-widget-width, 280px);
+  max-width: calc(100vw - 16px);
   user-select: none;
   font-family: "Helvetica Neue", "PingFang SC", sans-serif;
   --dh-mouth-x: 50%;
   --dh-mouth-y: 77.5%;
   --dh-mouth-width: 12%;
   --dh-mouth-height: 4.6%;
+  --dh-avatar-height: 220px;
+  --dh-avatar-fit: cover;
+  --dh-transcript-min-height: 92px;
 }
 
 .dh-widget {
+  width: 100%;
   background: linear-gradient(180deg, rgba(9, 14, 28, 0.96), rgba(17, 25, 40, 0.94));
   color: #eef4ff;
   border: 1px solid rgba(119, 163, 255, 0.25);
@@ -54,15 +59,15 @@
   z-index: 1;
   display: block;
   width: 100%;
-  height: 220px;
-  object-fit: cover;
+  height: 100%;
+  object-fit: var(--dh-avatar-fit);
   object-position: center top;
   border-radius: 14px;
 }
 
 .dh-avatar-stage {
   position: relative;
-  height: 220px;
+  height: var(--dh-avatar-height);
   border-radius: 14px;
   overflow: hidden;
 }
@@ -95,7 +100,8 @@
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: cover;
+  object-fit: var(--dh-avatar-fit);
+  background: #05090f;
 }
 
 .dh-live-canvas-gl {
@@ -112,8 +118,8 @@
   inset: 0;
   z-index: 3;
   width: 100%;
-  height: 220px;
-  object-fit: cover;
+  height: 100%;
+  object-fit: var(--dh-avatar-fit);
   object-position: center top;
   border-radius: 14px;
   clip-path: ellipse(calc(var(--dh-mouth-width) * 0.5) calc(var(--dh-mouth-height) * 0.5) at var(--dh-mouth-x) var(--dh-mouth-y));
@@ -150,7 +156,7 @@
 }
 
 .dh-transcript {
-  min-height: 92px;
+  min-height: var(--dh-transcript-min-height);
   padding: 14px 16px 18px;
   font-size: 13px;
   line-height: 1.5;

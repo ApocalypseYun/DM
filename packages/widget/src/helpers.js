@@ -9,18 +9,42 @@ export function clampPosition(position, viewport, widgetSize) {
 }
 
 export function normalizeMountOptions(options) {
-  const rawMouthRig = options.mouthRig ?? {}
-  const rawDhLive = options.dhLive ?? {}
+  const normalizedOptions = options ?? {}
+  const rawMouthRig = normalizedOptions.mouthRig ?? {}
+  const rawDhLive = normalizedOptions.dhLive ?? {}
+  const rawLayout = normalizedOptions.layout ?? {}
+  const frameMode = rawLayout.frameMode ?? 'full_body'
+
+  const defaultsByMode = frameMode === 'full_body'
+    ? {
+        widgetWidth: 340,
+        avatarHeight: 460,
+        transcriptMinHeight: 110,
+        avatarFit: 'contain',
+      }
+    : {
+        widgetWidth: 280,
+        avatarHeight: 220,
+        transcriptMinHeight: 92,
+        avatarFit: 'cover',
+      }
 
   return {
-    container: options.container ?? null,
-    serverUrl: options.serverUrl,
-    avatarImage: options.avatarImage ?? '/assets/avatar/front.jpg',
-    avatarRenderer: options.avatarRenderer ?? 'dh_live',
-    voiceProfile: options.voiceProfile ?? 'default_female_zh',
-    draggable: options.draggable ?? true,
-    mountMode: options.mountMode ?? 'floating',
-    title: options.title ?? '数字人助手',
+    container: normalizedOptions.container ?? null,
+    serverUrl: normalizedOptions.serverUrl,
+    avatarImage: normalizedOptions.avatarImage ?? '/assets/avatar/front.jpg',
+    avatarRenderer: normalizedOptions.avatarRenderer ?? 'dh_live',
+    voiceProfile: normalizedOptions.voiceProfile ?? 'default_female_zh',
+    draggable: normalizedOptions.draggable ?? true,
+    mountMode: normalizedOptions.mountMode ?? 'floating',
+    title: normalizedOptions.title ?? '数字人助手',
+    layout: {
+      frameMode,
+      widgetWidth: rawLayout.widgetWidth ?? defaultsByMode.widgetWidth,
+      avatarHeight: rawLayout.avatarHeight ?? defaultsByMode.avatarHeight,
+      transcriptMinHeight: rawLayout.transcriptMinHeight ?? defaultsByMode.transcriptMinHeight,
+      avatarFit: rawLayout.avatarFit ?? defaultsByMode.avatarFit,
+    },
     dhLive: {
       runtimeBaseUrl: rawDhLive.runtimeBaseUrl ?? '/widget/dh-live',
       assetBaseUrl: rawDhLive.assetBaseUrl ?? '/widget/dh-live/assets/default',

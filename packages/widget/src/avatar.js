@@ -56,10 +56,15 @@ export class AvatarView {
     this.mouthLayerEl.src = this.options.avatarImage
 
     const { mouthRig } = this.options
+    const { layout } = this.options
     this.root.style.setProperty('--dh-mouth-x', `${mouthRig.xPercent}%`)
     this.root.style.setProperty('--dh-mouth-y', `${mouthRig.yPercent}%`)
     this.root.style.setProperty('--dh-mouth-width', `${mouthRig.widthPercent}%`)
     this.root.style.setProperty('--dh-mouth-height', `${mouthRig.heightPercent}%`)
+    this.root.style.setProperty('--dh-widget-width', `${layout.widgetWidth}px`)
+    this.root.style.setProperty('--dh-avatar-height', `${layout.avatarHeight}px`)
+    this.root.style.setProperty('--dh-avatar-fit', layout.avatarFit)
+    this.root.style.setProperty('--dh-transcript-min-height', `${layout.transcriptMinHeight}px`)
   }
 
   async _initializeDhLive() {

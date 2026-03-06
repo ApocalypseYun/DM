@@ -16,6 +16,12 @@ window.DigitalHumanWidget.mount({
     assetBaseUrl: '/widget/dh-live/assets/default',
     frameRate: 25,
   },
+  layout: {
+    frameMode: 'full_body',
+    widgetWidth: 340,
+    avatarHeight: 460,
+    avatarFit: 'contain',
+  },
   mouthRig: {
     xPercent: 50,
     yPercent: 77.5,

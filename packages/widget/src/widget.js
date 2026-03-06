@@ -133,13 +133,17 @@ export class DigitalHumanWidget {
       if (!this.dragging) {
         return
       }
+      const rootRect = this.root.getBoundingClientRect()
       const next = clampPosition(
         {
           x: event.clientX - this.dragOffset.x,
           y: event.clientY - this.dragOffset.y,
         },
         { width: window.innerWidth, height: window.innerHeight },
-        { width: 280, height: 360 },
+        {
+          width: Math.ceil(rootRect.width || this.options.layout.widgetWidth),
+          height: Math.ceil(rootRect.height || this.options.layout.avatarHeight + 180),
+        },
       )
       this.position = next
       this._applyPosition()

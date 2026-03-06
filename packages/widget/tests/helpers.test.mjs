@@ -27,6 +27,13 @@ test('normalizeMountOptions fills defaults', () => {
   assert.equal(options.avatarRenderer, 'dh_live')
   assert.equal(options.draggable, true)
   assert.equal(options.mountMode, 'floating')
+  assert.deepEqual(options.layout, {
+    frameMode: 'full_body',
+    widgetWidth: 340,
+    avatarHeight: 460,
+    transcriptMinHeight: 110,
+    avatarFit: 'contain',
+  })
   assert.deepEqual(options.dhLive, {
     runtimeBaseUrl: '/widget/dh-live',
     assetBaseUrl: '/widget/dh-live/assets/default',
