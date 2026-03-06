@@ -41,6 +41,16 @@ function pickIdleClip(animations) {
   )
 }
 
+function pickClipByKeywords(animations, keywords) {
+  for (const keyword of keywords) {
+    const clip = animations.find((item) => item.name.toLowerCase().includes(keyword))
+    if (clip) {
+      return clip
+    }
+  }
+  return null
+}
+
 export class ThreeFullBodyAvatar {
   constructor(stageEl, options = {}) {
     this.stageEl = stageEl
@@ -54,7 +64,9 @@ export class ThreeFullBodyAvatar {
     this.camera = null
     this.clock = null
     this.mixer = null
-    this.idleAction = null
+    this.actions = new Map()
+    this.activeAction = null
+    this.animationClips = []
     this.model = null
     this.canvas = null
 
@@ -118,6 +130,7 @@ export class ThreeFullBodyAvatar {
 
   setState(nextState) {
     this.state = nextState
+    this._syncAnimationState()
   }
 
   setMouthLevel(level) {
@@ -317,16 +330,70 @@ export class ThreeFullBodyAvatar {
       return
     }
     this.mixer = new this.THREE.AnimationMixer(this.model)
-    const idleClip = pickIdleClip(animations)
-    if (!idleClip) {
+    this.animationClips = animations
+
+    for (const clip of animations) {
+      const action = this.mixer.clipAction(clip)
+      action.enabled = true
+      action.setLoop(this.THREE.LoopRepeat, Infinity)
+      this.actions.set(clip.name, action)
+    }
+    this._syncAnimationState(true)
+  }
+
+  _switchAction(nextClip, immediate = false) {
+    if (!nextClip || !this.mixer) {
       return
     }
-    this.idleAction = this.mixer.clipAction(idleClip)
-    this.idleAction.reset()
-    this.idleAction.enabled = true
-    this.idleAction.setLoop(this.THREE.LoopRepeat, Infinity)
-    this.idleAction.fadeIn(0.2)
-    this.idleAction.play()
+    const next = this.actions.get(nextClip.name)
+    if (!next) {
+      return
+    }
+    if (this.activeAction === next) {
+      return
+    }
+
+    const fade = immediate ? 0 : 0.22
+    if (this.activeAction) {
+      this.activeAction.fadeOut(fade)
+    }
+
+    next.reset()
+    next.fadeIn(fade)
+    next.play()
+    this.activeAction = next
+  }
+
+  _syncAnimationState(immediate = false) {
+    if (!this.animationClips.length) {
+      return
+    }
+
+    const speaking = this.state === 'speaking'
+    const thinking = this.state === 'thinking'
+    const listening = this.state === 'listening'
+
+    const speakingClip = pickClipByKeywords(this.animationClips, [
+      'talk',
+      'wave',
+      'yes',
+      'walk',
+      'dance',
+      'run',
+    ])
+    const thinkingClip = pickClipByKeywords(this.animationClips, ['idle', 'no', 'yes', 'wave'])
+    const listeningClip = pickClipByKeywords(this.animationClips, ['idle', 'yes', 'wave'])
+    const idleClip = pickIdleClip(this.animationClips)
+
+    const targetClip = speaking
+      ? speakingClip ?? idleClip
+      : thinking
+      ? thinkingClip ?? idleClip
+      : listening
+      ? listeningClip ?? idleClip
+      : idleClip
+
+    this._switchAction(targetClip, immediate)
   }
 
   _handleResize() {
@@ -379,37 +446,48 @@ export class ThreeFullBodyAvatar {
     const listening = this.state === 'listening'
 
     const speechPulse = speaking ? 1 : 0
-    const torsoAmplitude = speaking ? 0.06 : thinking ? 0.03 : 0.012
-    const neckAmplitude = speaking ? 0.03 : listening ? 0.02 : 0.01
-    const armAmplitude = speaking ? 0.16 : thinking ? 0.08 : 0.02
+    const torsoAmplitude = speaking ? 0.14 : thinking ? 0.07 : listening ? 0.05 : 0.03
+    const neckAmplitude = speaking ? 0.06 : listening ? 0.04 : 0.025
+    const armAmplitude = speaking ? 0.42 : thinking ? 0.2 : listening ? 0.14 : 0.08
 
     if (this.torsoBone) {
       const base = this.baseBoneState.get(this.torsoBone)
       if (base) {
-        this.torsoBone.rotation.z = base.z + Math.sin(this.time * 1.8) * torsoAmplitude
-        this.torsoBone.rotation.y = base.y + Math.sin(this.time * 1.1) * torsoAmplitude * 0.45
+        this.torsoBone.rotation.z = base.z + Math.sin(this.time * 1.85) * torsoAmplitude
+        this.torsoBone.rotation.y = base.y + Math.sin(this.time * 1.2 + 0.4) * torsoAmplitude * 0.7
+        this.torsoBone.rotation.x = base.x + Math.sin(this.time * 2.1) * torsoAmplitude * 0.32
       }
     }
 
     if (this.neckBone) {
       const base = this.baseBoneState.get(this.neckBone)
       if (base) {
-        this.neckBone.rotation.x = base.x + Math.sin(this.time * 2.2) * neckAmplitude
+        this.neckBone.rotation.x = base.x + Math.sin(this.time * 2.5 + 0.2) * neckAmplitude
+        this.neckBone.rotation.y = base.y + Math.sin(this.time * 1.3) * neckAmplitude * 0.7
       }
     }
 
     if (this.rightArmBone) {
       const base = this.baseBoneState.get(this.rightArmBone)
       if (base) {
-        this.rightArmBone.rotation.z = base.z + Math.sin(this.time * 3.4) * armAmplitude * (0.6 + speechPulse * 0.4)
+        this.rightArmBone.rotation.z = base.z + Math.sin(this.time * 3.2) * armAmplitude * (0.7 + speechPulse * 0.55)
+        this.rightArmBone.rotation.x = base.x + Math.sin(this.time * 2.7 + 0.3) * armAmplitude * 0.36
       }
     }
 
     if (this.leftArmBone) {
       const base = this.baseBoneState.get(this.leftArmBone)
       if (base) {
-        this.leftArmBone.rotation.z = base.z - Math.sin(this.time * 2.9 + 0.8) * armAmplitude * 0.55
+        this.leftArmBone.rotation.z = base.z - Math.sin(this.time * 2.9 + 0.8) * armAmplitude * 0.75
+        this.leftArmBone.rotation.x = base.x - Math.sin(this.time * 2.4 + 0.7) * armAmplitude * 0.28
       }
+    }
+
+    if (this.model) {
+      const baseY = this.model.userData.baseY ?? this.model.position.y
+      this.model.userData.baseY = baseY
+      const bob = Math.sin(this.time * 2.4) * (speaking ? 0.03 : thinking ? 0.02 : 0.012)
+      this.model.position.y = baseY + bob
     }
   }
 }
