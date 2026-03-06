@@ -1,6 +1,5 @@
-const THREE_VERSION = '0.164.1'
-const THREE_MODULE_URL = `https://cdn.jsdelivr.net/npm/three@${THREE_VERSION}/build/three.module.js`
-const GLTF_LOADER_URL = `https://cdn.jsdelivr.net/npm/three@${THREE_VERSION}/examples/jsm/loaders/GLTFLoader.js`
+const THREE_MODULE_URL = new URL('./vendor/three/three.module.js', import.meta.url).toString()
+const GLTF_LOADER_URL = new URL('./vendor/three/GLTFLoader.js', import.meta.url).toString()
 
 let runtimePromise = null
 
