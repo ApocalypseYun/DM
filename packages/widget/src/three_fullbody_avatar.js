@@ -15,8 +15,45 @@ function buildRegexMatcher(patterns) {
 const isHeadLike = buildRegexMatcher(['head', 'face'])
 const isNeckLike = buildRegexMatcher(['neck'])
 const isTorsoLike = buildRegexMatcher(['spine', 'torso', 'body', 'chest'])
-const isRightArmLike = buildRegexMatcher(['upperarm\\.r', 'rightarm', 'arm_r', 'r_arm'])
-const isLeftArmLike = buildRegexMatcher(['upperarm\\.l', 'leftarm', 'arm_l', 'l_arm'])
+const isHipsLike = buildRegexMatcher(['hips', 'pelvis'])
+const isRightArmLike = buildRegexMatcher([
+  'upperarm\\.r',
+  'lowerarm\\.r',
+  'arm\\.r',
+  'shoulder\\.r',
+  'rightarm',
+  'arm_r',
+  'r_arm',
+])
+const isLeftArmLike = buildRegexMatcher([
+  'upperarm\\.l',
+  'lowerarm\\.l',
+  'arm\\.l',
+  'shoulder\\.l',
+  'leftarm',
+  'arm_l',
+  'l_arm',
+])
+const isRightLegLike = buildRegexMatcher([
+  'upperleg\\.r',
+  'lowerleg\\.r',
+  'leg\\.r',
+  'thigh\\.r',
+  'calf\\.r',
+  'rightleg',
+  'leg_r',
+  'r_leg',
+])
+const isLeftLegLike = buildRegexMatcher([
+  'upperleg\\.l',
+  'lowerleg\\.l',
+  'leg\\.l',
+  'thigh\\.l',
+  'calf\\.l',
+  'leftleg',
+  'leg_l',
+  'l_leg',
+])
 const isJawMorphLike = buildRegexMatcher(['jaw', 'mouth', 'viseme', '^a$', '^o$', '^aa$', 'open'])
 
 async function loadRuntime() {
@@ -75,8 +112,11 @@ export class ThreeFullBodyAvatar {
     this.headBone = null
     this.neckBone = null
     this.torsoBone = null
+    this.hipsBone = null
     this.rightArmBone = null
     this.leftArmBone = null
+    this.rightLegBone = null
+    this.leftLegBone = null
     this.baseBoneState = new Map()
 
     this.state = 'idle'
@@ -272,10 +312,13 @@ export class ThreeFullBodyAvatar {
     }
 
     this._captureBaseBoneState(this.torsoBone)
+    this._captureBaseBoneState(this.hipsBone)
     this._captureBaseBoneState(this.neckBone)
     this._captureBaseBoneState(this.headBone)
     this._captureBaseBoneState(this.rightArmBone)
     this._captureBaseBoneState(this.leftArmBone)
+    this._captureBaseBoneState(this.rightLegBone)
+    this._captureBaseBoneState(this.leftLegBone)
   }
 
   _maybeBindBone(node) {
@@ -292,12 +335,24 @@ export class ThreeFullBodyAvatar {
       this.torsoBone = node
       return
     }
+    if (!this.hipsBone && isHipsLike(name)) {
+      this.hipsBone = node
+      return
+    }
     if (!this.rightArmBone && isRightArmLike(name)) {
       this.rightArmBone = node
       return
     }
     if (!this.leftArmBone && isLeftArmLike(name)) {
       this.leftArmBone = node
+      return
+    }
+    if (!this.rightLegBone && isRightLegLike(name)) {
+      this.rightLegBone = node
+      return
+    }
+    if (!this.leftLegBone && isLeftLegLike(name)) {
+      this.leftLegBone = node
     }
   }
 
@@ -374,15 +429,15 @@ export class ThreeFullBodyAvatar {
     const listening = this.state === 'listening'
 
     const speakingClip = pickClipByKeywords(this.animationClips, [
-      'talk',
       'wave',
+      'walking',
+      'running',
       'yes',
-      'walk',
       'dance',
-      'run',
+      'talk',
     ])
-    const thinkingClip = pickClipByKeywords(this.animationClips, ['idle', 'no', 'yes', 'wave'])
-    const listeningClip = pickClipByKeywords(this.animationClips, ['idle', 'yes', 'wave'])
+    const thinkingClip = pickClipByKeywords(this.animationClips, ['no', 'yes', 'idle', 'wave'])
+    const listeningClip = pickClipByKeywords(this.animationClips, ['yes', 'idle', 'wave'])
     const idleClip = pickIdleClip(this.animationClips)
 
     const targetClip = speaking
@@ -445,49 +500,90 @@ export class ThreeFullBodyAvatar {
     const thinking = this.state === 'thinking'
     const listening = this.state === 'listening'
 
-    const speechPulse = speaking ? 1 : 0
-    const torsoAmplitude = speaking ? 0.14 : thinking ? 0.07 : listening ? 0.05 : 0.03
-    const neckAmplitude = speaking ? 0.06 : listening ? 0.04 : 0.025
-    const armAmplitude = speaking ? 0.42 : thinking ? 0.2 : listening ? 0.14 : 0.08
+    const stateLevel = speaking ? 1 : thinking ? 0.8 : listening ? 0.68 : 0.56
+    const breath = Math.sin(this.time * 1.8)
+    const sway = Math.sin(this.time * 1.2 + 0.3)
+    const swayFast = Math.sin(this.time * 2.7 + 0.8)
+    const armCycle = Math.sin(this.time * 2.4 + 0.35)
+    const legCycle = Math.sin(this.time * 2.1 + 1.1)
+
+    const torsoAmplitude = 0.12 * stateLevel
+    const neckAmplitude = 0.06 * stateLevel
+    const armAmplitude = 0.34 * stateLevel
+    const legAmplitude = 0.14 * stateLevel
+    const hipAmplitude = 0.11 * stateLevel
+
+    if (this.hipsBone) {
+      const base = this.baseBoneState.get(this.hipsBone)
+      if (base) {
+        this.hipsBone.rotation.y = base.y + sway * hipAmplitude * 0.6
+        this.hipsBone.rotation.z = base.z + swayFast * hipAmplitude * 0.38
+      }
+    }
 
     if (this.torsoBone) {
       const base = this.baseBoneState.get(this.torsoBone)
       if (base) {
-        this.torsoBone.rotation.z = base.z + Math.sin(this.time * 1.85) * torsoAmplitude
-        this.torsoBone.rotation.y = base.y + Math.sin(this.time * 1.2 + 0.4) * torsoAmplitude * 0.7
-        this.torsoBone.rotation.x = base.x + Math.sin(this.time * 2.1) * torsoAmplitude * 0.32
+        this.torsoBone.rotation.z = base.z + sway * torsoAmplitude
+        this.torsoBone.rotation.y = base.y + swayFast * torsoAmplitude * 0.55
+        this.torsoBone.rotation.x = base.x + breath * torsoAmplitude * 0.5
       }
     }
 
     if (this.neckBone) {
       const base = this.baseBoneState.get(this.neckBone)
       if (base) {
-        this.neckBone.rotation.x = base.x + Math.sin(this.time * 2.5 + 0.2) * neckAmplitude
-        this.neckBone.rotation.y = base.y + Math.sin(this.time * 1.3) * neckAmplitude * 0.7
+        this.neckBone.rotation.x = base.x + breath * neckAmplitude
+        this.neckBone.rotation.y = base.y + sway * neckAmplitude * 0.9
       }
     }
 
     if (this.rightArmBone) {
       const base = this.baseBoneState.get(this.rightArmBone)
       if (base) {
-        this.rightArmBone.rotation.z = base.z + Math.sin(this.time * 3.2) * armAmplitude * (0.7 + speechPulse * 0.55)
-        this.rightArmBone.rotation.x = base.x + Math.sin(this.time * 2.7 + 0.3) * armAmplitude * 0.36
+        this.rightArmBone.rotation.z = base.z + armCycle * armAmplitude * 0.95
+        this.rightArmBone.rotation.x = base.x + swayFast * armAmplitude * 0.45
+        this.rightArmBone.rotation.y = base.y + sway * armAmplitude * 0.35
       }
     }
 
     if (this.leftArmBone) {
       const base = this.baseBoneState.get(this.leftArmBone)
       if (base) {
-        this.leftArmBone.rotation.z = base.z - Math.sin(this.time * 2.9 + 0.8) * armAmplitude * 0.75
-        this.leftArmBone.rotation.x = base.x - Math.sin(this.time * 2.4 + 0.7) * armAmplitude * 0.28
+        this.leftArmBone.rotation.z = base.z - armCycle * armAmplitude * 0.95
+        this.leftArmBone.rotation.x = base.x - swayFast * armAmplitude * 0.45
+        this.leftArmBone.rotation.y = base.y - sway * armAmplitude * 0.35
+      }
+    }
+
+    if (this.rightLegBone) {
+      const base = this.baseBoneState.get(this.rightLegBone)
+      if (base) {
+        this.rightLegBone.rotation.x = base.x + legCycle * legAmplitude
+        this.rightLegBone.rotation.y = base.y + sway * legAmplitude * 0.25
+      }
+    }
+
+    if (this.leftLegBone) {
+      const base = this.baseBoneState.get(this.leftLegBone)
+      if (base) {
+        this.leftLegBone.rotation.x = base.x - legCycle * legAmplitude
+        this.leftLegBone.rotation.y = base.y - sway * legAmplitude * 0.25
       }
     }
 
     if (this.model) {
-      const baseY = this.model.userData.baseY ?? this.model.position.y
-      this.model.userData.baseY = baseY
-      const bob = Math.sin(this.time * 2.4) * (speaking ? 0.03 : thinking ? 0.02 : 0.012)
-      this.model.position.y = baseY + bob
+      const base = this.model.userData.basePose ?? {
+        x: this.model.position.x,
+        y: this.model.position.y,
+        z: this.model.position.z,
+        ry: this.model.rotation.y,
+      }
+      this.model.userData.basePose = base
+      const bob = Math.sin(this.time * 2.25) * (0.024 * stateLevel)
+      this.model.position.y = base.y + bob
+      this.model.position.x = base.x + sway * 0.03 * stateLevel
+      this.model.rotation.y = base.ry + swayFast * 0.06 * stateLevel
     }
   }
 }
